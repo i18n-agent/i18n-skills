@@ -1,42 +1,82 @@
-# i18n-skills
+# i18n Skills for Claude Code
 
-AI-powered slash commands for auditing and wrapping i18n strings in any codebase.
+Slash commands that turn Claude Code into an i18n expert — audit your existing translations for quality issues, or wrap hardcoded strings with the correct i18n function for your framework. Works with any codebase: React, Vue, Angular, Svelte, Python, Ruby, Flutter, iOS, Android.
 
-## What Are Skills?
-
-Skills are reusable slash commands for AI coding assistants (Claude Code, etc.). Each skill is a structured prompt that turns the assistant into a specialized i18n agent with deep knowledge of framework-specific patterns, plural rules, and localization best practices.
-
-## Available Commands
-
-### `/i18n-review` -- Audit existing i18n wrapping
-
-Read-only audit that scans your codebase for i18n quality issues:
-
-- **Split sentences** -- concatenated `t()` calls that break word order in other languages
-- **Over-wrapping** -- technical constants (API, PDF, USD) incorrectly wrapped with `t()`
-- **Under-wrapping** -- user-facing strings missing `t()` calls
-- **Plural issues** -- manual ternaries instead of framework plural support, missing plural categories
-- **Unused keys** -- translation keys with no code references
-- **Hardcoded values** -- dates, prices, counts baked into translation strings instead of using parameters
+## Install
 
 ```bash
-/i18n-review src/
-/i18n-review src/ --framework=next-intl
+cp -r commands/*.md ~/.claude/commands/
 ```
 
-### `/i18n-wrap` -- Wrap hardcoded strings with i18n functions
+Then restart Claude Code. The commands are now available in any project.
 
-Scans source files for hardcoded user-facing strings and wraps them with the correct i18n function for your framework:
+## Commands
 
-- Auto-detects your framework (next-intl, react-i18next, vue-i18n, Angular, Svelte, Python, Ruby, Flutter, iOS, Android)
-- Generates semantic translation keys with proper namespacing
-- Handles interpolation, plurals, and rich text markup
-- Updates locale files with new keys
-- Validates build, lint, and tests after changes
+### `/i18n-review` — Audit existing i18n wrapping
+
+Read-only audit that finds quality issues in your existing translations:
+
+- **Split sentences** — `t('hello') + name` breaks word order in Japanese, Arabic, etc.
+- **Over-wrapping** — `t('PDF')`, `t('API')` — technical constants that don't need translation
+- **Under-wrapping** — `"Cancel"`, `"Email"` — user-facing strings missing `t()` calls
+- **Broken plurals** — `count === 1 ? 'item' : 'items'` instead of proper plural rules
+- **Unused keys** — translation keys with no code references (saves translator cost)
+- **Hardcoded values** — `"14 days"` baked into translations instead of `{count}` parameters
+
+```
+> /i18n-review src/components/
+
+i18n Review: src/components/
+========================================
+Framework: next-intl | Source: en | Targets: [de, ja, es, fr]
+
+=== 🔴 CRITICAL (3) ===
+  src/components/Pricing.tsx:42 -- t('price') + '$' + amount -- Fix: single key t('price', {amount}) with Intl.NumberFormat
+  src/components/Header.tsx:18 -- t('welcome') + userName -- Fix: t('welcome', {name})
+  src/components/Cart.tsx:31 -- count === 1 ? 'item' : 'items' -- Fix: ICU plural {count, plural, one{# item} other{# items}}
+
+=== 🟡 WARNING (5) ===
+  src/components/Badge.tsx:12 -- t('api.label') wraps "API" -- technical acronym, unwrap
+  src/components/Form.tsx:28 -- "Submit" not wrapped -- user-facing button label
+
+=== SUMMARY ===
+  🔴 Critical: 3  |  🟡 Warning: 5  |  🔵 Info: 2
+```
+
+### `/i18n-wrap` — Wrap hardcoded strings
+
+Scans files, wraps hardcoded strings with the right i18n function, updates locale files, and validates the build:
+
+```
+> /i18n-wrap src/components/Dashboard.tsx
+
+i18n Wrap: src/components/Dashboard.tsx
+========================================
+Framework: next-intl | Source: en | Targets: [de, ja, es, fr]
+
+--- SCAN ---
+  Files: 1 scanned | Strings: 8 found | Already wrapped: 2 | Newly wrapped: 6
+
+--- KEYS ---
+  dashboard.title: "Dashboard"
+  dashboard.welcome: "Welcome back, {name}"
+  dashboard.stats.items: "{count, plural, one{# item} other{# items}}"
+  common.buttons.save: "Save changes"
+
+--- LOCALE FILES ---
+  messages/en.json: +6 keys
+  Missing translations: 6 across 4 locales
+
+--- VALIDATION ---
+  Build: PASS | Lint: PASS | Tests: PASS (2 updated)
+```
+
+You can target a directory or specify a framework:
 
 ```bash
-/i18n-wrap src/components/
+/i18n-wrap src/
 /i18n-wrap src/ --framework=react-i18next
+/i18n-review src/ --framework=vue-i18n
 ```
 
 ## Supported Frameworks
@@ -51,29 +91,11 @@ Scans source files for hardcoded user-facing strings and wraps them with the cor
 | Python | `_("str")` / `gettext()` | `ngettext()` |
 | Ruby | `t('key')` / `I18n.t()` | YAML `count:` |
 | Flutter | `AppLocalizations.of(context)` | ICU in ARB |
-| iOS | `NSLocalizedString` / `String(localized:)` | `.stringsdict` |
+| iOS | `NSLocalizedString` | `.stringsdict` |
 | Android | `getString(R.string.key)` | `<plurals>` XML |
-
-## Installation
-
-Copy the `commands/` directory into your project's `.claude/commands/` folder:
-
-```bash
-cp -r commands/ /path/to/your-project/.claude/commands/
-```
-
-Or copy individual command files:
-
-```bash
-mkdir -p .claude/commands
-cp commands/i18n-review.md .claude/commands/
-cp commands/i18n-wrap.md .claude/commands/
-```
-
-Then use them as slash commands in Claude Code.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file.
+MIT — see [LICENSE](LICENSE).
 
-Built by [i18nagent.ai](https://i18nagent.ai)
+Built by [i18n Agent](https://i18nagent.ai)
