@@ -97,6 +97,8 @@ The #1 i18n quality issue. Flag these concatenation anti-patterns:
 | `t('or')` / `t('and')` standalone | Connectors inside full sentence | Merge into parent key |
 | `t('error') + ': ' + msg` | Separator varies | `t('errorMessage', {message})` |
 | `t('step') + n + '/' + total` | Format differs per locale | `t('stepProgress', {step, total})` |
+| `t('label').toLowerCase()` | Case rules differ by language (Turkish İ/i, German ß→SS) | Separate key with correct casing |
+| `{n} {t('label')}` (JSX) | Bypasses plural handling ("1 languages") | `t('label_count', {count: n})` with ICU plurals |
 
 Search patterns:
 ```bash

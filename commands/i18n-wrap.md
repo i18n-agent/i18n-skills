@@ -20,6 +20,8 @@ When uncertain: wrap it. Over-wrapping = minor annoyance. Under-wrapping = broke
 - NEVER guess framework -- ask user if ambiguous
 - NEVER delete existing translations or overwrite them
 - NEVER use `defaultValue` in t() calls
+- NEVER transform t() output (`.toLowerCase()`, `.toUpperCase()`, `.trim()`, template casing) -- case rules differ by language (e.g. Turkish İ/i, German ß→SS); create a separate key instead
+- NEVER interpolate count outside t() (`{n} {t('label')}`) -- bypasses plural handling ("1 languages"); use single key with ICU plurals: `t('label_count', {count: n})`
 
 </instructions>
 
